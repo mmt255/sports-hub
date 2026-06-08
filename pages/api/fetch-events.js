@@ -433,15 +433,70 @@ async function enrichBroadcasts(events) {
   return enriched
 }
 
-// ─── Main handler ─────────────────────────────────────────────────────────────
+// ─── Core sync logic (shared by /api/fetch-events and /api/sync) ─────────────
+
+export async function runSync(res) {
+  const from = today()
+  const to   = dateStr(6)
+
+  console.log(`[sync] Starting run for ${from} → ${to}`)
+
+  const [football, f1, nba, mma] = await Promise.allSettled([
+    fetchFootball(from, to),
+    fetchF1(from, to),
+    fetchNBA(from, to),
+    fetchMMA(from, to),
+  ]).then(results =>
+    results.map(r => (r.status === 'fulfilled' ? r.value : []))
+  )
+
+  let claudeEvents = []
+  try {
+    claudeEvents = await fetchClaudeEvents(from, to)
+  } catch (err) {
+    console.error('[sync] Claude agent failed:', err.message)
+  }
+
+  const allEvents = [...football, ...f1, ...nba, ...mma, ...claudeEvents]
+  allEvents.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+
+  console.log(`[sync] Total before broadcast enrichment: ${allEvents.length}`)
+
+  const enriched = await enrichBroadcasts(allEvents)
+
+  await writeCache({
+    last_updated: new Date().toISOString(),
+    events: enriched,
+  })
+
+  try {
+    await res.revalidate('/')
+    console.log('[sync] ISR revalidation triggered')
+  } catch {
+    // Not fatal — page regenerates on next visit
+  }
+
+  return {
+    from,
+    to,
+    counts: {
+      football: football.length,
+      f1: f1.length,
+      nba: nba.length,
+      mma: mma.length,
+      claude: claudeEvents.length,
+      total: enriched.length,
+    },
+  }
+}
+
+// ─── Cron handler (requires CRON_SECRET) ─────────────────────────────────────
 
 export default async function handler(req, res) {
-  // Only allow GET (Vercel Cron uses GET) and POST (manual trigger)
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).end()
   }
 
-  // Vercel Cron sends Authorization: Bearer <CRON_SECRET>
   const cronSecret = process.env.CRON_SECRET
   if (cronSecret) {
     const auth = req.headers.authorization || ''
@@ -450,69 +505,9 @@ export default async function handler(req, res) {
     }
   }
 
-  const from = today()
-  const to   = dateStr(6)
-
-  console.log(`[fetch-events] Starting run for ${from} → ${to}`)
-
   try {
-    // ── Parallel fetch: API-Sports sources ─────────────────────────────────
-    const [football, f1, nba, mma] = await Promise.allSettled([
-      fetchFootball(from, to),
-      fetchF1(from, to),
-      fetchNBA(from, to),
-      fetchMMA(from, to),
-    ]).then(results =>
-      results.map(r => (r.status === 'fulfilled' ? r.value : []))
-    )
-
-    // ── Sequential: Claude agent (has its own retry logic) ─────────────────
-    let claudeEvents = []
-    try {
-      claudeEvents = await fetchClaudeEvents(from, to)
-    } catch (err) {
-      console.error('[fetch-events] Claude agent failed:', err.message)
-    }
-
-    // ── Combine ─────────────────────────────────────────────────────────────
-    const allEvents = [...football, ...f1, ...nba, ...mma, ...claudeEvents]
-
-    // Sort chronologically
-    allEvents.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
-
-    console.log(`[fetch-events] Total before broadcast enrichment: ${allEvents.length}`)
-
-    // ── Enrich with broadcast channels ──────────────────────────────────────
-    const enriched = await enrichBroadcasts(allEvents)
-
-    // ── Save ─────────────────────────────────────────────────────────────────
-    const cacheData = {
-      last_updated: new Date().toISOString(),
-      events: enriched,
-    }
-    await writeCache(cacheData)
-
-    // ── Trigger ISR revalidation ──────────────────────────────────────────────
-    try {
-      await res.revalidate('/')
-      console.log('[fetch-events] ISR revalidation triggered')
-    } catch {
-      // Not fatal — page will regenerate on next visit
-    }
-
-    return res.status(200).json({
-      success: true,
-      from,
-      to,
-      counts: {
-        football: football.length,
-        f1: f1.length,
-        nba: nba.length,
-        mma: mma.length,
-        claude: claudeEvents.length,
-        total: enriched.length,
-      },
-    })
+    const result = await runSync(res)
+    return res.status(200).json({ success: true, ...result })
   } catch (err) {
     console.error('[fetch-events] Fatal error:', err)
     return res.status(500).json({ error: err.message })
