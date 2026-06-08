@@ -18,6 +18,9 @@
  *   REVALIDATE_SECRET    — any random string; used for ISR revalidation
  */
 
+// Tell Vercel this function can run up to 300 seconds (requires Pro plan)
+export const maxDuration = 300
+
 import { writeCache } from '../../lib/cache'
 import { fetchClaudeEvents } from '../../lib/claudeAgent'
 import { getBroadcastChannels, getFallbackChannels } from '../../lib/broadcast'

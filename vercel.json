@@ -4,10 +4,5 @@
       "path": "/api/fetch-events",
       "schedule": "0 6 * * *"
     }
-  ],
-  "functions": {
-    "api/fetch-events.js": {
-      "maxDuration": 300
-    }
-  }
+  ]
 }
