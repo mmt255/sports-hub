@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/fetch-events",
+      "schedule": "0 6 * * *"
+    }
+  ],
+  "functions": {
+    "pages/api/fetch-events.js": {
+      "maxDuration": 300
+    }
+  }
+}

@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Build
+/.next/
+/out/
+
+# Local env
+.env*.local
+.env
+
+# Vercel
+.vercel
+
+# OS
+.DS_Store
+
+# Cache (local dev only — production uses Vercel KV)
+# Comment this line out if you want to commit a seed cache:
+# data/events-cache.json
