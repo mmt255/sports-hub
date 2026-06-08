@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import Head from 'next/head'
 import { readCache } from '../lib/cache'
 
@@ -266,10 +266,10 @@ export default function Home({ events, lastUpdated }) {
           {!lastUpdated && (
             <div className="rounded-xl bg-surface border border-border p-6 text-center mb-6">
               <p className="text-text-muted text-sm">
-                Events will load at the next sync (daily at 06:00 GMT).
+                No events yet — trigger a sync to populate the schedule.
               </p>
               <p className="text-xs text-gray-600 mt-1">
-                Trigger manually: <code className="text-gray-500">GET /api/fetch-events</code>
+                Visit <code className="text-gray-500">/api/sync</code> then refresh this page.
               </p>
             </div>
           )}
@@ -301,14 +301,17 @@ export default function Home({ events, lastUpdated }) {
 }
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
+// getServerSideProps so the page always reads the latest cache on each request.
+// This means data appears immediately after /api/sync completes, with no
+// redeploy or ISR revalidation lag.
 
-export async function getStaticProps() {
+export async function getServerSideProps() {
   let cacheData = { last_updated: null, events: [] }
 
   try {
     cacheData = await readCache()
   } catch (err) {
-    console.error('[getStaticProps] cache read failed:', err.message)
+    console.error('[getServerSideProps] cache read failed:', err.message)
   }
 
   return {
@@ -316,8 +319,5 @@ export async function getStaticProps() {
       events:      cacheData.events || [],
       lastUpdated: cacheData.last_updated || null,
     },
-    // Fallback revalidation: regenerate once per hour
-    // On-demand ISR (triggered by cron job) takes priority
-    revalidate: 3600,
   }
 }
