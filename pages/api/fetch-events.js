@@ -441,19 +441,31 @@ export async function runSync(res) {
 
   console.log(`[sync] Starting run for ${from} → ${to}`)
 
-  const [football, f1, nba, mma] = await Promise.allSettled([
+  const settled = await Promise.allSettled([
     fetchFootball(from, to),
     fetchF1(from, to),
     fetchNBA(from, to),
     fetchMMA(from, to),
-  ]).then(results =>
-    results.map(r => (r.status === 'fulfilled' ? r.value : []))
+  ])
+
+  const [football, f1, nba, mma] = settled.map(r =>
+    r.status === 'fulfilled' ? r.value : []
   )
+
+  const errors = []
+  settled.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      const label = ['football', 'f1', 'nba', 'mma'][i]
+      errors.push(`${label}: ${r.reason?.message ?? r.reason}`)
+      console.error(`[sync] ${label} fetch failed:`, r.reason)
+    }
+  })
 
   let claudeEvents = []
   try {
     claudeEvents = await fetchClaudeEvents(from, to)
   } catch (err) {
+    errors.push(`claude: ${err.message}`)
     console.error('[sync] Claude agent failed:', err.message)
   }
 
@@ -487,6 +499,7 @@ export async function runSync(res) {
       claude: claudeEvents.length,
       total: enriched.length,
     },
+    ...(errors.length ? { errors } : {}),
   }
 }
 
