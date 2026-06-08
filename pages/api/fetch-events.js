@@ -41,23 +41,10 @@ export async function runSync(res) {
     console.error('[sync] Claude agent failed:', err.message)
   }
 
-  // Assign fallback broadcast channels (LiveSoccerTV scrape runs for football only)
-  const enriched = await Promise.all(
-    events.map(async ev => {
-      try {
-        // Only scrape LiveSoccerTV for football events ≤5 days away
-        if (ev.sport === 'football' && ev.home_team && ev.away_team) {
-          const daysDiff = (new Date(ev.date) - now) / 86400000
-          if (daysDiff <= 5) {
-            const { getBroadcastChannels } = await import('../../lib/broadcast')
-            const channels = await getBroadcastChannels(ev)
-            return { ...ev, channels }
-          }
-        }
-      } catch {}
-      return { ...ev, channels: getFallbackChannels(ev) }
-    })
-  )
+  // Assign broadcast channels synchronously from the hardcoded fallback table.
+  // The async LiveSoccerTV scrape was exceeding Vercel Hobby's 10s limit and
+  // preventing writeCache from ever being reached.
+  const enriched = events.map(ev => ({ ...ev, channels: getFallbackChannels(ev) }))
 
   enriched.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
 
