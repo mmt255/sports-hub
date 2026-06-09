@@ -123,7 +123,7 @@ function EventRow({ event, sportConfig }) {
   return (
     <div
       className={`border-l-2 pl-3 rounded-r cursor-pointer select-none ${cls}`}
-      style={{ borderColor: color }}
+      style={{ borderLeftColor: color }}
       onClick={() => setExpanded(e => !e)}
     >
       {/* Collapsed summary row */}
