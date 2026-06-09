@@ -127,7 +127,7 @@ function EventRow({ event, sportConfig }) {
       onClick={() => setExpanded(e => !e)}
     >
       {/* Collapsed summary row */}
-      <div className="flex items-center justify-between py-2.5 gap-2">
+      <div className="flex items-center justify-between py-3.5 gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-base flex-shrink-0">{icon}</span>
           <span className="text-sm font-medium text-text-primary truncate">
@@ -169,7 +169,7 @@ function DayCard({ dateStr, index, events }) {
       >
         <div className="flex items-center gap-2">
           {index === 0 && (
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full animate-pulse">
               Live
             </span>
           )}
@@ -191,7 +191,7 @@ function DayCard({ dateStr, index, events }) {
           {isEmpty ? (
             <p className="text-sm text-gray-400 py-2">No events scheduled</p>
           ) : (
-            <div className="space-y-1">
+            <div className="divide-y divide-[#2a2a2a]">
               {events.map(ev => {
                 const cfg = SPORT_CONFIG[ev.sport] || DEFAULT_CONFIG
                 return <EventRow key={ev.id} event={ev} sportConfig={cfg} />
@@ -232,7 +232,13 @@ export default function Home({ events, lastUpdated }) {
 
           {/* Header */}
           <div className="mb-8 text-center">
-            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-2">
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight mb-2"
+                style={{
+                  background: 'linear-gradient(135deg, #ffffff 0%, #a3e635 50%, #4ade80 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>
               Peter b Alaa
             </h1>
             <p className="text-gray-400 text-sm">
