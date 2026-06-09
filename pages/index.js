@@ -155,7 +155,7 @@ function EventRow({ event, sportConfig }) {
 }
 
 function DayCard({ dateStr, index, events }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
 
   const label   = formatDayLabel(dateStr, index)
   const isEmpty = events.length === 0
