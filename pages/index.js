@@ -97,7 +97,7 @@ function EventDetail({ event }) {
         {TIMEZONES.map(({ label, tz, flag }) => (
           <div key={tz} className="flex items-center gap-1.5">
             <span className="text-base">{flag}</span>
-            <span className="text-text-muted text-xs min-w-[52px]">{label}</span>
+            <span className="text-gray-400 text-xs min-w-[52px]">{label}</span>
             <span className="text-white font-medium text-xs">
               {tz === 'UTC' ? (time_utc === 'TBD' ? 'TBD' : time_utc) : formatTime(date, time_utc, tz)}
             </span>
@@ -107,7 +107,7 @@ function EventDetail({ event }) {
 
       {/* Competition name */}
       {competition && (
-        <p className="text-xs text-text-muted">{competition}{is_lebanese_basketball ? ' 🇱🇧' : ''}</p>
+        <p className="text-xs text-gray-400">{competition}{is_lebanese_basketball ? ' 🇱🇧' : ''}</p>
       )}
 
       {/* Channels */}
@@ -136,10 +136,10 @@ function EventRow({ event, sportConfig }) {
           </span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-xs text-text-muted font-mono">
-            {event.time_utc === 'TBD' ? 'TBD' : event.time_utc} <span className="text-gray-600">GMT</span>
+          <span className="text-xs text-gray-300 font-mono">
+            {event.time_utc === 'TBD' ? 'TBD' : event.time_utc} <span className="text-gray-400">GMT</span>
           </span>
-          <span className="text-text-muted text-xs">{expanded ? '▲' : '▼'}</span>
+          <span className="text-gray-400 text-xs">{expanded ? '▲' : '▼'}</span>
         </div>
       </div>
 
@@ -154,8 +154,8 @@ function EventRow({ event, sportConfig }) {
   )
 }
 
-function DayCard({ dateStr, index, events, defaultOpen }) {
-  const [open, setOpen] = useState(defaultOpen)
+function DayCard({ dateStr, index, events }) {
+  const [open, setOpen] = useState(false)
 
   const label   = formatDayLabel(dateStr, index)
   const isEmpty = events.length === 0
@@ -177,11 +177,11 @@ function DayCard({ dateStr, index, events, defaultOpen }) {
         </div>
         <div className="flex items-center gap-3">
           {!isEmpty && (
-            <span className="text-xs text-text-muted">
+            <span className="text-xs text-gray-400">
               {events.length} event{events.length !== 1 ? 's' : ''}
             </span>
           )}
-          <span className="text-text-muted text-sm">{open ? '▲' : '▼'}</span>
+          <span className="text-gray-400 text-sm">{open ? '▲' : '▼'}</span>
         </div>
       </button>
 
@@ -189,7 +189,7 @@ function DayCard({ dateStr, index, events, defaultOpen }) {
       {open && (
         <div className="px-4 pb-4">
           {isEmpty ? (
-            <p className="text-sm text-text-muted py-2">No events scheduled</p>
+            <p className="text-sm text-gray-400 py-2">No events scheduled</p>
           ) : (
             <div className="space-y-1">
               {events.map(ev => {
@@ -204,34 +204,15 @@ function DayCard({ dateStr, index, events, defaultOpen }) {
   )
 }
 
-// ─── Legend ───────────────────────────────────────────────────────────────────
-
-function Legend() {
-  return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-text-muted">
-      {Object.entries(SPORT_CONFIG).map(([key, { icon, label, color }]) => (
-        <span key={key} className="flex items-center gap-1">
-          <span
-            className="inline-block w-2 h-4 rounded-sm flex-shrink-0"
-            style={{ backgroundColor: color }}
-          />
-          {icon} {label}
-        </span>
-      ))}
-    </div>
-  )
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Home({ events, lastUpdated }) {
-  const days     = getSevenDays()
+  const days       = getSevenDays()
   const lastUpdFmt = formatLastUpdated(lastUpdated)
 
   // Group events by date
   const byDate = {}
   for (const day of days) byDate[day] = []
-
   for (const ev of events) {
     if (ev.date in byDate) byDate[ev.date].push(ev)
   }
@@ -251,24 +232,21 @@ export default function Home({ events, lastUpdated }) {
 
           {/* Header */}
           <div className="mb-8 text-center">
-            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-1">
+            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight mb-2">
               Peter b Alaa
             </h1>
-            <p className="text-text-muted text-sm tracking-widest uppercase">Next 7 Days</p>
-          </div>
-
-          {/* Legend */}
-          <div className="mb-6">
-            <Legend />
+            <p className="text-gray-400 text-sm">
+              Sports events next 7 days. Click on any event for TV channels and local times.
+            </p>
           </div>
 
           {/* No data state */}
           {!lastUpdated && (
             <div className="rounded-xl bg-surface border border-border p-6 text-center mb-6">
-              <p className="text-text-muted text-sm">
+              <p className="text-gray-400 text-sm">
                 No events yet — trigger a sync to populate the schedule.
               </p>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Visit <code className="text-gray-500">/api/sync</code> then refresh this page.
               </p>
             </div>
@@ -282,7 +260,6 @@ export default function Home({ events, lastUpdated }) {
                 dateStr={dateStr}
                 index={i}
                 events={byDate[dateStr] || []}
-                defaultOpen={i === 0}
               />
             ))}
           </div>
@@ -290,9 +267,9 @@ export default function Home({ events, lastUpdated }) {
           {/* Footer */}
           <div className="mt-10 text-center">
             {lastUpdFmt && (
-              <p className="text-xs text-gray-600">Last updated: {lastUpdFmt}</p>
+              <p className="text-xs text-gray-400">Last updated: {lastUpdFmt}</p>
             )}
-            <p className="text-xs text-gray-700 mt-1">Refreshes daily at 06:00 GMT</p>
+            <p className="text-xs text-gray-500 mt-1">Refreshes daily at 06:00 GMT</p>
           </div>
         </div>
       </div>
@@ -301,9 +278,6 @@ export default function Home({ events, lastUpdated }) {
 }
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
-// getServerSideProps so the page always reads the latest cache on each request.
-// This means data appears immediately after /api/sync completes, with no
-// redeploy or ISR revalidation lag.
 
 export async function getServerSideProps() {
   let cacheData = { last_updated: null, events: [] }
